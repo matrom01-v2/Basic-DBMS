@@ -2,6 +2,7 @@ from asyncio.windows_events import NULL
 from distutils.log import error
 from time import sleep
 from os import system, name
+from getpass import getpass
 import mysql.connector 
 import sys
 import os
@@ -30,19 +31,19 @@ def login():
         hst = input("Please input hostname: ")
         dtbs = input("Please enter name of database: ")
         usrnm = input("Username: ")
-        pswrd = input("Password: ")
+        pswrd = getpass("Password: ")
 
         try:
             mydb = mysql.connector.connect(
                 host=hst,
                 user=usrnm,
-                password=pswrd, #   CHANGE TO HIDE STRING!!!!
+                password=pswrd, 
                 database=dtbs
             )
             global mycursor
-            mycursor = mydb.cursor()
+            mycursor = mydb.cursor() # set cursor for collecting tuples
 
-            logged_in = True
+            logged_in = True # 
             print(f"\nSuccessful login! Weclome to {dtbs}!")
             print("=======================================")
             sleep(2)
@@ -93,28 +94,27 @@ def main():
 
 def display_all():
     clear_screen()
-    print("you selected 1\n")
     print("====================\n", "Digital Displays")
     print("====================\n")
     sleep(1)
 
-    mycursor.execute("select modelNo from digitalDisplay")
+    mycursor.execute("select * from digitalDisplay")
     myresults = mycursor.fetchall()
 
     counter = 1
 
     # fetch model numbers
     for x in myresults:
-        print(counter,". Model: ", x[0])
+        print(counter,":\nModel: ", x[0], "\nSchedular System: ",x[1], "\nSerial Number: ", x[2], "\n")
         counter += 1
     print("--------------------------")
-    print("1. See a digital display")
+    print("1. See detailed Mondel info")
     print("2. return to Main menu")
     option = int(input("\nEnter number for option: "))
 
     # ask for input to see digital display or return to main menu
     if option == 1:
-        selection = int(input("Enter model number for desired digital display: "))
+        selection = int(input("Enter the model number for desired model: "))
         mycursor.execute(f"select * from Model where modelNo = {selection}")
         print()
 
@@ -125,7 +125,7 @@ def display_all():
         
         # get all detailed info for selected digital display
         for x in myresults:
-            print(f"Model Number\t {x[0]}")
+            print(f"Model Number:\t {x[0]}")
             print(f"Width:\t {x[1]}")
             print(f"Height:\t {x[2]}")
             print(f"Weight:\t {x[3]}")
@@ -152,6 +152,7 @@ def display_all():
 
 
 def search():
+    clear_screen()
     type = input("Please type the digital display scheduler system: ")
     type = type.lower()
 
@@ -163,13 +164,20 @@ def search():
 
     mycursor.execute(f"select * from digitaldisplay where schedulerSystem = '{type}';")
     myresults = mycursor.fetchall()
-    for x in myresults: 
-            print(x)
+    print(f"\n\"{type}\" Digital Displays")
+    print(f"-------------------------")
 
+    count = 1
+    for x in myresults: 
+            print(f"{count}. Serial Number: ", x[0])
+            print(f"\tModel Number: ", x[2],"\n")
+            count+=1
+
+    print("\n\nMenu options:")
     print("\n1. Search again\n"
             "2. return to main menu\n")
 
-    option = input()
+    option = input("\n\nEnter number for option: ")
     option = int(option)
 
     if(option == 1):
@@ -222,8 +230,10 @@ def insert():
     print("\n---All Digital Displays---")
     mycursor.execute(f"select * from digitaldisplay;")
 
+    counter = 1
     for x in mycursor:
-        print(x)
+        print(counter,". Model: ", x[0], "\n\tSchedular System: ",x[1], "\n\tSerial Number: ", x[2])
+        counter += 1
 
     print("\n1. Insert again\n"
             "2. return to main menu\n")
@@ -288,3 +298,4 @@ def insertModel(modelNo):
         insertModel()
         
 login()
+
