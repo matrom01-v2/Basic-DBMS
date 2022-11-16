@@ -32,15 +32,12 @@ def login():
         usrnm = input("Username: ")
         pswrd = input("Password: ")
 
-        #####################################
-        ## CHANGE TO VARIABLES!!!!!!!!!!!!!!!
-        #####################################
         try:
             mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="balladeno1ingminor",
-                database="abc_media"
+                host=hst,
+                user=usrnm,
+                password=pswrd, #   CHANGE TO HIDE STRING!!!!
+                database=dtbs
             )
             global mycursor
             mycursor = mydb.cursor()
