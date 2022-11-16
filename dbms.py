@@ -15,13 +15,16 @@ def clear_screen():
         system('clear')
 
 
+##################
+# Log in function
+##################
 
 def login():
     print("=====================")
     print("Welcome to your DBMS!")
     print("=====================\n")
 
-    logged_in = False
+    logged_in = False # flag for successful login
     
     while(not logged_in):
         hst = input("Please input hostname: ")
@@ -48,6 +51,8 @@ def login():
             sleep(2)
             clear_screen()
             main()
+
+            # close connection when done
             if(mydb.is_connected()):
                 mydb.close()
                 mycursor.close()
@@ -59,11 +64,7 @@ def login():
 
 
 def main():
-    # mycursor.execute("SHOW tables;")
-    # print(mycursor)
 
-    # for x in mycursor:
-    #     print(x)
     clear_screen()
     print("Main menu")
     print("--------------------------------\n")
@@ -94,9 +95,64 @@ def main():
 
 
 def display_all():
-    print("you selected 1")
-    sleep(2)
-    main()
+    clear_screen()
+    print("you selected 1\n")
+    print("====================\n", "Digital Displays")
+    print("====================\n")
+    sleep(1)
+
+    mycursor.execute("select modelNo from digitalDisplay")
+    myresults = mycursor.fetchall()
+
+    counter = 1
+
+    # fetch model numbers
+    for x in myresults:
+        print(counter,". Model: ", x[0])
+        counter += 1
+    print("--------------------------")
+    print("1. See a digital display")
+    print("2. return to Main menu")
+    option = int(input("\nEnter number for option: "))
+
+    # ask for input to see digital display or return to main menu
+    if option == 1:
+        selection = int(input("Enter model number for desired digital display: "))
+        mycursor.execute(f"select * from Model where modelNo = {selection}")
+        print()
+
+        myresults = mycursor.fetchall()
+
+        if myresults == NULL:
+            print("No model found!")
+        
+        # get all detailed info for selected digital display
+        for x in myresults:
+            print(f"Model Number\t {x[0]}")
+            print(f"Width:\t {x[1]}")
+            print(f"Height:\t {x[2]}")
+            print(f"Weight:\t {x[3]}")
+            print(f"Depth:\t {x[4]}")
+            print(f"Screen Size:\t{x[5]}")
+        
+        print("\nMenu:\n")
+        print("1. Return to Digital Displays")
+        print("2. Return to Main Menu")
+
+        option = int(input("Enter number for option: "))
+
+        if option == 1:
+            display_all()
+        else:
+            main()
+    
+    else:
+        main()
+#end display_all
+
+
+
+
 
 def search():
     type = input("Please type the digital display scheduler system: ")
@@ -126,24 +182,84 @@ def search():
     else:
         print("Not a valid input!")
         print("Defaulting to main menu")
+        sleep(1)
         main()
         print()
-        
+# end search        
+
+
+
 
 def insert():
     print("you selected 3")
-    sleep(2)
-    main()
+
+    print("To insert a new digit display please type")
+    modelNo = int(input("Model number: "))
+
+    #check if digitaldisplay model number already exists
+    mycursor.execute(f"select * from digitaldisplay where modelNo = {modelNo};")
+    myresults = mycursor.fetchall()
+
+    if(len(myresults) != 0):
+        print("digital display Model number already exists!\n")
+        insert()
+        return
+
+    #get rest of the info needed to insert digital dispay
+    serialNo = int(input("Serial number: "))
+    schsys = input("Scheduler System: ")
+
+
+    #check if model has a model with that model number
+    mycursor.execute(f"select * from model where modelNo = {modelNo};")
+    myresults = mycursor.fetchall()
+
+    #if there no model with that model number then call function to create one
+    if(len(myresults) == 0):
+        print("\nYou need to insert a new model first")
+        insertModel(modelNo)
+
+    #insert digital display
+    mycursor.execute(f"insert into digitaldisplay values({serialNo},'{schsys}',{modelNo});")
+
+    print("\n---All Digital Displays---")
+    mycursor.execute(f"select * from digitaldisplay;")
+
+    for x in mycursor:
+        print(x)
+
+    print("\n1. Insert again\n"
+            "2. return to main menu\n")
+
+    option = int(input())
+
+    if(option == 1):
+        insert()
+    elif(option == 2):
+            main()
+    else:
+        print("Not a valid input!")
+        print("Defaulting to main menu")
+        main()
+
+
+
 
 def delete():
     print("you selected 4")
     sleep(2)
     main()
 
+
+
+
 def update():
     print("you selected 5")
     sleep(2)
     main()
+
+
+
 
 def logout():
     print("you selected 6\n")
@@ -158,9 +274,20 @@ def logout():
         clear_screen()
         login()
     else:
-        main()
+        return
     
+def insertModel(modelNo):
+    print("To insert a new model please type")
+    width = input("Width: ")
+    height = input("height: ")
+    weight = input("Weight: ")
+    depth = input("Depth: ")
+    scrnSize = input("Screen Size: ")
 
-
-
+    try:
+        mycursor.execute(f"insert into model values({modelNo},{width},{height},{weight},{depth},{scrnSize});")
+    except Exception: 
+        print("invalid input! Try again")
+        insertModel()
+        
 login()
