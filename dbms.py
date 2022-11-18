@@ -21,6 +21,7 @@ def clear_screen():
 ##################
 
 def login():
+    clear_screen()
     print("=====================")
     print("Welcome to your DBMS!")
     print("=====================\n")
@@ -67,7 +68,7 @@ def main():
     print("Main menu")
     print("--------------------------------\n")
     print("\n1. Display all the digital displays.\n"
-           "2. Search digital displays given a scheduler system\n"
+           "2. Search Digital Displays given a Scheduler System\n"
            "3. Insert a new digital display\n"
            "4. Delete a digital display\n"
            "5. Update a digital display\n"
@@ -105,7 +106,7 @@ def display_all():
 
     # fetch model numbers
     for x in myresults:
-        print(counter,":\nModel: ", x[0], "\nSchedular System: ",x[1], "\nSerial Number: ", x[2], "\n")
+        print(counter,":\nSerial Number: ", x[0], "\nSchedular System: ",x[1], "\nModel: ", x[2], "\n")
         counter += 1
     print("--------------------------")
     print("1. See detailed Mondel info")
@@ -153,7 +154,10 @@ def display_all():
 
 def search():
     clear_screen()
-    type = input("Please type the digital display scheduler system: ")
+    print("====================\n", "Search")
+    print("====================\n")
+    print("Schedular Systems: Smart, Virtue, Random\n")
+    type = input("Please type the digital display scheduler system you want to search: ")
     type = type.lower()
 
     while(type != "random" and type != "smart" and type != "virtue"):
@@ -169,13 +173,13 @@ def search():
 
     count = 1
     for x in myresults: 
-            print(f"{count}. Serial Number: ", x[0])
-            print(f"\tModel Number: ", x[2],"\n")
+            print(f"{count}.\nSerial Number: ", x[0])
+            print(f"Model Number: ", x[2],"\n")
             count+=1
 
     print("\n\nMenu options:")
     print("\n1. Search again\n"
-            "2. return to main menu\n")
+            "2. Return to Main Menu\n")
 
     option = input("\n\nEnter number for option: ")
     option = int(option)
@@ -196,7 +200,8 @@ def search():
 
 
 def insert():
-    print("you selected 3")
+    print("====================\n", "Insert")
+    print("====================\n")
 
     print("To insert a new digit display please type")
     modelNo = int(input("Model number: "))
