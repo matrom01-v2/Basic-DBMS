@@ -252,9 +252,70 @@ def insert():
 
 
 def delete():
-    print("you selected 4")
-    sleep(2)
-    main()
+    clear_screen()
+    print("====================\n", "Delete")
+    print("====================\n")
+
+    showAllDisplays()
+
+    print("--------------------------")
+    print("1. Delete a Digital Display")
+    print("2. Return to Main menu")
+    option = input("\n\nEnter number for option: ")
+    option = int(option)
+
+    if(option == 1):
+        print("To delete a digital display please enter")
+        serialNo = input("serial Number: ")
+        modelNo = input("model number: ")
+
+        # Check for Valid input
+        notValid = True 
+        while(notValid):
+            if (not serialNo.isdigit()):
+                print("Oops! That was invalid input")
+                serialNo = input("Please enter Serial Number for digital display: ")
+            else:
+                notValid = False
+
+
+        try:
+            #mycursor.excecute("delete from digitaldisplay where serialNo = %s;" % (serialNo))
+            mycursor.execute("delete from digitaldisplay where serialNo = %s;", (serialNo,))
+            print("succesfully deleted digital display")
+        except Exception:
+             print("An error occured while deleteing digital display! Please try again\n")
+             delete()
+
+
+        # check if model coresponds to any other digital displays
+        try:
+            int(modelNo)
+            mycursor.execute("select * from digital display where modelNo = %s;" % (modelNo,))
+            # mycursor.execute(f"select * from digital display where modelNo = {modelNo};")
+            myresults = mycursor.fetchall()
+        except Exception:
+            print("fml")
+            delete()
+
+        if(len(myresults) == 0):
+            try:
+                mycursor.execute("Delete from model where modelNo = %s;" % (modelNo,))
+                # mycursor.excecute(f"Delete from model where modelNo = {modelNo};")
+                print("succesfully deleted corresponding model")
+            except Exception:
+                print("An error occured while deleteing model!\n")
+
+
+        showAllDisplays()
+    
+    # rerturn to main menu option   
+    elif(option == 2):
+        main()
+    else:
+        print("Not a valid input!") 
+        sleep(1)
+        delete()
 
 
 ##############################################################
@@ -443,7 +504,7 @@ def showAllDisplays():
 
     counter = 1
     for x in mycursor:
-        print(counter,". Model: ", x[0], "\n\tSchedular System: ",x[1], "\n\tSerial Number: ", x[2])
+        print(counter,".\n Serial Number: ", x[0], "\n\tSchedular System: ",x[1], "\n\tModel Number: ", x[2])
         counter += 1
         
 login()
