@@ -203,24 +203,24 @@ def insert():
     print("====================\n")
 
     print("To insert a new digit display please type")
-    modelNo = int(input("Model number: "))
+    serialNo = int(input("serialNo number: "))
 
     #check if digitaldisplay model number already exists
-    mycursor.execute("select * from digitaldisplay where modelNo = %s;", (modelNo))
+    mycursor.execute("select * from digitaldisplay where serialNo = %s;" % (serialNo))
     myresults = mycursor.fetchall()
 
     if(len(myresults) != 0):
-        print("digital display Model number already exists!\n")
+        print("digital display serial number already exists!\n")
         insert()
         return
 
     #get rest of the info needed to insert digital dispay
-    serialNo = int(input("Serial number: "))
+    modelNo = int(input("model number: "))
     schsys = input("Scheduler System: ")
 
 
     #check if model has a model with that model number
-    mycursor.execute("select * from model where modelNo = %s;", (modelNo))
+    mycursor.execute("select * from model where modelNo = %s;" % (modelNo))
     myresults = mycursor.fetchall()
 
     #if there no model with that model number then call function to create one
@@ -229,7 +229,7 @@ def insert():
         insertModel(modelNo)
 
     #insert digital display
-    mycursor.execute("insert into digitaldisplay values(%s,%s,%s);",(serialNo,schsys,modelNo))
+    mycursor.execute("insert into digitaldisplay values(%s,%s,%s);", (serialNo,schsys,modelNo))
 
     print("\n---All Digital Displays---")
     showAllDisplays()
@@ -267,7 +267,7 @@ def delete():
     if(option == 1):
         print("To delete a digital display please enter")
         serialNo = input("serial Number: ")
-        modelNo = input("model number: ")
+
 
         # Check for Valid input
         notValid = True 
@@ -279,35 +279,61 @@ def delete():
                 notValid = False
 
 
+        modelNo = input("model number: ")
+
+        # Check for Valid input
+        notValid = True 
+        while(notValid):
+            if (not modelNo.isdigit()):
+                print("Oops! That was invalid input")
+                modelNo = input("Please enter model Number for digital display: ")
+            else:
+                notValid = False
+
+        #delete digitaldisplay
         try:
-            #mycursor.excecute("delete from digitaldisplay where serialNo = %s;" % (serialNo))
-            mycursor.execute("delete from digitaldisplay where serialNo = %s;", (serialNo,))
+            mycursor.execute("delete from digitaldisplay where serialNo = %s;" , (serialNo,))
             print("succesfully deleted digital display")
         except Exception:
              print("An error occured while deleteing digital display! Please try again\n")
              delete()
 
 
-        # check if model coresponds to any other digital displays
+        #check if model number coresponds to any other digital displays
         try:
-            int(modelNo)
             mycursor.execute("select * from digital display where modelNo = %s;" % (modelNo,))
-            # mycursor.execute(f"select * from digital display where modelNo = {modelNo};")
             myresults = mycursor.fetchall()
         except Exception:
-            print("fml")
+            print("error checking for corresponding models")
             delete()
 
+        #if not other digitaldisplays have that model delete the model
         if(len(myresults) == 0):
             try:
                 mycursor.execute("Delete from model where modelNo = %s;" % (modelNo,))
-                # mycursor.excecute(f"Delete from model where modelNo = {modelNo};")
                 print("succesfully deleted corresponding model")
             except Exception:
                 print("An error occured while deleteing model!\n")
 
 
         showAllDisplays()
+
+
+        print("\n==== models ====")
+        mycursor.execute("select * from model;")
+
+        myresults = mycursor.fetchall()
+
+        count = 1
+        for x in myresults:
+            print(count)
+            print(f"Model Number:\t {x[0]}")
+            print(f"Width:\t {x[1]}")
+            print(f"Height:\t {x[2]}")
+            print(f"Weight:\t {x[3]}")
+            print(f"Depth:\t {x[4]}")
+            print(f"Screen Size:\t{x[5]}\n")
+            count += 1
     
     # rerturn to main menu option   
     elif(option == 2):
