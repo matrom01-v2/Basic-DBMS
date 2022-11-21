@@ -554,7 +554,14 @@ def update():
                     print("Oops! That was invalid input")
                 else:
                     notValid = False
-            
+             #check if model has a model with that model number
+            mycursor.execute("select * from model where modelNo = %s;" % (newmod))
+            myresults = mycursor.fetchall()
+
+        #if there no model with that model number then call function to create one
+            if(len(myresults) == 0):
+                print("\nYou need to insert a new model first")
+                insertModel(newmod)
             # update the model number and commit changes
             mycursor.execute("update digitalDisplay set modelNo = %s where serialNo = %s", (newmod, sernum))
             mydb.commit()
@@ -643,4 +650,3 @@ def showAllDisplays():
         counter += 1
         
 login()
-
