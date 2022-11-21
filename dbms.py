@@ -38,6 +38,7 @@ def login():
         pswrd = getpass("Password: ")
 
         try:
+            global mydb
             mydb = mysql.connector.connect(
                 host=hst,
                 user=usrnm,
@@ -150,28 +151,41 @@ def display_all():
 
 
 
-
+###########################################################
+# SEARCH
+# This function handles searching for a Digital Display
+# with a specific scheduler system
+# - Joey Troyer
+###########################################################
 def search():
     clear_screen()
     print("====================\n", "Search")
     print("====================\n")
     print("Schedular Systems: Smart, Virtue, Random\n")
+
+    # get user input of what kind of scheduler system to search for
     type = input("Please type the digital display scheduler system you want to search: ")
     type = type.lower()
 
+    # make sure input is valid
     while(type != "random" and type != "smart" and type != "virtue"):
         print("\nThat is not a valid scheduler system!")
         type = input("Please type the digital display scheduler system: ")
         type = type.lower()
 
-
-    mycursor.execute("select * from digitaldisplay where schedulerSystem = %s;",(type,))
+    # search for displays of given type
+    mycursor.execute("select * from digitaldisplay where schedulerSystem = %s;" , (type,))
     myresults = mycursor.fetchall()
     print(f"\n\"{type}\" Digital Displays")
     print(f"-------------------------")
 
-    showAllDisplays()
+    # print search results
+    counter = 1
+    for x in myresults:
+        print(counter,".\n Serial Number: ", x[0], "\n\tSchedular System: ",x[1], "\n\tModel Number: ", x[2])
+        counter += 1
 
+    # return to main menu options
     print("\n\nMenu options:")
     print("\n1. Search again\n"
             "2. Return to Main Menu\n")
@@ -200,57 +214,116 @@ def search():
 ###########################################################
 def insert():
     print("====================\n", "Insert")
-    print("====================\n")
-
-    print("To insert a new digit display please type")
-    serialNo = int(input("serialNo number: "))
-
-    #check if digitaldisplay model number already exists
-    mycursor.execute("select * from digitaldisplay where serialNo = %s;" % (serialNo))
-    myresults = mycursor.fetchall()
-
-    if(len(myresults) != 0):
-        print("digital display serial number already exists!\n")
-        insert()
-        return
-
-    #get rest of the info needed to insert digital dispay
-    modelNo = int(input("model number: "))
-    schsys = input("Scheduler System: ")
+    print("====================")
 
 
-    #check if model has a model with that model number
-    mycursor.execute("select * from model where modelNo = %s;" % (modelNo))
-    myresults = mycursor.fetchall()
-
-    #if there no model with that model number then call function to create one
-    if(len(myresults) == 0):
-        print("\nYou need to insert a new model first")
-        insertModel(modelNo)
-
-    #insert digital display
-    mycursor.execute("insert into digitaldisplay values(%s,%s,%s);", (serialNo,schsys,modelNo))
-
-    print("\n---All Digital Displays---")
     showAllDisplays()
 
-    print("\n1. Insert again\n"
-            "2. return to main menu\n")
-
-    option = int(input())
+    print("--------------------------")
+    print("1. Insert a new Digital Display")
+    print("2. Return to Main menu")
+    option = input("\n\nEnter number for option: ")
+    option = int(option)
 
     if(option == 1):
-        insert()
-    elif(option == 2):
+
+        print("To insert a new digit display please type")
+        serialNo = input("Serial Number: ")
+
+        # check for valid input
+        notValid = True
+        while(notValid):
+            if (not serialNo.isdigit()):
+                print("Oops! That was invalid input")
+                serialNo = input("Serial Number: ")
+            else:
+                notValid = False
+
+        #check if digitaldisplay model number already exists
+        mycursor.execute("select * from digitaldisplay where serialNo = %s;" % (serialNo))
+        myresults = mycursor.fetchall()
+
+        if(len(myresults) != 0):
+            print("digital display serial number already exists!\n")
+            insert()
+            return
+
+        #get rest of the info needed to insert digital dispay
+        modelNo = input("Model Number: ")
+
+        # check for valid input
+        notValid = True
+        while(notValid):
+            if (not modelNo.isdigit()):
+                print("Oops! That was invalid input")
+                modelNo = input("Model Number: ")
+            else:
+                notValid = False
+
+        schsys = input("Scheduler System: ")
+
+        notValid = True
+        while(notValid):
+            if schsys not in ('smart', 'virtue', 'random'):
+                print("Oops! That was invalid input")
+                schsys = input("Scheduler System: ")
+                schsys = schsys.lower()
+            else:
+                notValid = False
+
+        #check if model has a model with that model number
+        mycursor.execute("select * from model where modelNo = %s;" % (modelNo))
+        myresults = mycursor.fetchall()
+
+        #if there no model with that model number then call function to create one
+        if(len(myresults) == 0):
+            print("\nYou need to insert a new model first")
+            insertModel(modelNo)
+
+        try:
+            #insert digital display and commit changes
+            mycursor.execute("insert into digitaldisplay values(%s,%s,%s);", (serialNo,schsys,modelNo))
+            mydb.commit()
+            print("Successfully inserted digital display")
+        except Exception:
+            print("Error inserting new digital display! Please try again")
+            insert()
+    
+
+        showAllDisplays()
+
+        print("\n1. Insert again\n"
+                "2. return to main menu\n")
+
+        option = int(input())
+
+        if(option == 1):
+            insert()
+        elif(option == 2):
+                main()
+        else:
+            print("Not a valid input!")
+            print("Defaulting to main menu")
             main()
-    else:
-        print("Not a valid input!")
-        print("Defaulting to main menu")
+    
+    elif(option == 2):
         main()
+    
+    else:
+        print("Not a valid input!") 
+        sleep(1)
+        delete()
 
 
 
 
+###########################################################
+# DELETE
+# This function handles users deleting a Digital Display
+# and will also delete corresponding model if its not 
+# linked to any other digital displays
+# - Joey Troyer
+###########################################################
 def delete():
     clear_screen()
     print("====================\n", "Delete")
@@ -290,43 +363,48 @@ def delete():
             else:
                 notValid = False
 
-        #delete digitaldisplay
+        
         try:
+            # Delete digial display and commit changes
             mycursor.execute("delete from digitaldisplay where serialNo = %s;" , (serialNo,))
-            print("succesfully deleted digital display")
+            mydb.commit()
+            print("Succesfully deleted digital display")
         except Exception:
              print("An error occured while deleteing digital display! Please try again\n")
+             sleep(2)
              delete()
 
 
-        #check if model number coresponds to any other digital displays
         try:
-            mycursor.execute("select * from digital display where modelNo = %s;" % (modelNo,))
+            # check if model number coresponds to any other digital displays
+            mycursor.execute("select * from digitaldisplay where modelNo = %s;" , (modelNo,))
             myresults = mycursor.fetchall()
         except Exception:
-            print("error checking for corresponding models")
+            print("error checking for corresponding models! Please Try again")
+            sleep(2)
             delete()
 
-        #if not other digitaldisplays have that model delete the model
+        # if len = 0 no other digital displays correspond to model
         if(len(myresults) == 0):
             try:
-                mycursor.execute("Delete from model where modelNo = %s;" % (modelNo,))
+                # Delete model and commit changes
+                mycursor.execute("Delete from model where modelNo = %s;" ,(modelNo,))
+                mydb.commit()
                 print("succesfully deleted corresponding model")
             except Exception:
                 print("An error occured while deleteing model!\n")
 
+        sleep(2)
 
         showAllDisplays()
 
-
-        print("\n==== models ====")
+        print("\nCurrent Models:")
         mycursor.execute("select * from model;")
 
         myresults = mycursor.fetchall()
-
         count = 1
         for x in myresults:
-            print(count)
+            print(f"{count}. ")
             print(f"Model Number:\t {x[0]}")
             print(f"Width:\t {x[1]}")
             print(f"Height:\t {x[2]}")
@@ -334,6 +412,25 @@ def delete():
             print(f"Depth:\t {x[4]}")
             print(f"Screen Size:\t{x[5]}\n")
             count += 1
+
+        # return to main menu options
+        print("\n\nMenu options:")
+        print("\n1. Delete again\n"
+                "2. Return to Main Menu\n")
+
+        option = input("\n\nEnter number for option: ")
+        option = int(option)
+
+        if(option == 1):
+            delete()
+        elif(option == 2):
+            main()
+        else:
+            print("Not a valid input!")
+            print("Defaulting to main menu")
+            sleep(1)
+            main()
+
     
     # rerturn to main menu option   
     elif(option == 2):
@@ -406,8 +503,10 @@ def update():
                 else:
                     notValid = False
             
-            # update the serialNo
+            # update the serialNo and commit changes
             mycursor.execute("update digitalDisplay set serialNo = %s where serialNo = %s", (newser, sernum))
+            mydb.commit()
+
             showAllDisplays()
             option = input("\n\nEnter 1 to return to Update: ") # force to go back to update
             option = int(option)
@@ -432,8 +531,10 @@ def update():
                 else:
                     notValid = False
 
-            # update scheduler system 
+            # update scheduler system and commit changes
             mycursor.execute("update digitalDisplay set schedulerSystem = %s where serialNo = %s", (newsys, sernum))
+            mydb.commit()
+
             showAllDisplays()
             option = input("\n\nEnter 1 to return to Update: ")
             option = int(option)
@@ -454,8 +555,10 @@ def update():
                 else:
                     notValid = False
             
-            # update the model number
+            # update the model number and commit changes
             mycursor.execute("update digitalDisplay set modelNo = %s where serialNo = %s", (newmod, sernum))
+            mydb.commit()
+
             showAllDisplays()
             option = input("\n\nEnter 1 to return to Update: ")
             option = int(option)
@@ -482,6 +585,7 @@ def update():
 # LOGOUT 
 # This function verifies users want to logout 
 # and does so, returning user to the login function
+# - Mateo Romero
 ###########################################################
 def logout():
     print("you selected 6\n")
@@ -500,11 +604,13 @@ def logout():
 
 
 ###########################################################
-# INSERT
+# INSERT MODEL
 # This functions handles new insertions into MODEl
 # if the user wanted to add a Digital Display
+# - Joey Troyer
 ###########################################################
 def insertModel(modelNo):
+    # get input for model details
     print("To insert a new model please type")
     width = input("Width: ")
     height = input("height: ")
@@ -513,16 +619,19 @@ def insertModel(modelNo):
     scrnSize = input("Screen Size: ")
 
     try:
+        #insert a new model and commit changes
         mycursor.execute("insert into model values(%s,%s,%s,%s,%s,%s);", (modelNo, width, height, weight, depth, scrnSize))
+        mydb.commit()
     except Exception: 
         print("invalid input! Try again")
         insertModel()
 
 
 ###########################################################
-# SHOWALLDISPLAYS
+# SHOW ALL DISPLAYS
 # This is a simple helper function that
 # displays all the digital displays when needed
+# - Mateo Romero
 ###########################################################
 def showAllDisplays():
     print("\nCurrent Digital Displays:")
